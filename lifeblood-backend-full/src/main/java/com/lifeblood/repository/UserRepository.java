@@ -44,7 +44,7 @@ public class UserRepository {
                         "SELECT u FROM User u WHERE u.bloodGroup = :bg AND u.division = :div AND u.district = :dist AND u.upazila = :upa AND u.isActive = true AND u.isVerified = true",
                         User.class
                 )
-                .setParameter("bg", bloodGroup) // এখানে valueOf() দরকার নেই
+                .setParameter("bg", bloodGroup)
                 .setParameter("div", division)
                 .setParameter("dist", district)
                 .setParameter("upa", upazila)

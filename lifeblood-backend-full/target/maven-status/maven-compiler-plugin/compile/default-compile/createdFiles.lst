@@ -9,6 +9,7 @@ com\lifeblood\service\DonationService.class
 com\lifeblood\service\UserService.class
 com\lifeblood\controller\AuthController.class
 com\lifeblood\repository\UserRepository.class
+com\lifeblood\filter\CorsFilter.class
 com\lifeblood\model\User$Role.class
 com\lifeblood\util\JwtUtil.class
 com\lifeblood\auth\AuthFilter.class

@@ -27,17 +27,30 @@ public class AuthController {
     @POST
     @Path("/login")
     public Response login(User loginRequest) {
-        User user = authService.login(loginRequest.getEmail(), loginRequest.getPasswordHash());
-        if (user == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
+        try {
+            User user = authService.login(loginRequest.getEmail(), loginRequest.getPasswordHash());
+
+            if (user == null) {
+                System.out.println("Login failed: Invalid credentials");
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
+
+            String token = JwtUtil.generateToken(user.getId().toString(), user.getRole().toString());
+            System.out.println("Generated token: " + token);
+            System.out.println("Setting Authorization header: Bearer " + token);
+
+            Response response = Response.ok()
+                    .header("Authorization", "Bearer " + token)
+                    .entity(user)
+                    .build();
+
+            System.out.println("Response headers: " + response.getHeaders());
+            return response;
+
+        } catch (Exception e) {
+            System.err.println("Login error: " + e.getMessage());
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
-
-        String token = JwtUtil.generateToken(user.getId().toString(), user.getRole().toString());
-//        System.out.println("Received Auth Header: " + token);
-        return Response.ok()
-                .header("Authorization", "Bearer " + token)
-                .entity(user)
-                .build();
     }
-
 }
