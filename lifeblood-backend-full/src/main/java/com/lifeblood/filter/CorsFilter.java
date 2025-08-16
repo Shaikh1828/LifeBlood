@@ -17,10 +17,15 @@ public class CorsFilter implements ContainerResponseFilter {
             responseContext.getHeaders().add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
             responseContext.getHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
 
-            // এটা খুবই important - Authorization header expose করার জন্য
+            // এটা সবচেয়ে important - credentials allow করার জন্য
+            responseContext.getHeaders().add("Access-Control-Allow-Credentials", "true");
+
+            // Authorization header expose করার জন্য
             responseContext.getHeaders().add("Access-Control-Expose-Headers", "Authorization, Content-Type");
 
             System.out.println("CORS headers added successfully");
+            System.out.println("Request Method: " + requestContext.getMethod());
+            System.out.println("Request URI: " + requestContext.getUriInfo().getRequestUri());
 
         } catch (Exception e) {
             System.err.println("CORS Filter Error: " + e.getMessage());

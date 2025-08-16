@@ -3,7 +3,7 @@ import { Header } from './components/Layout/Header';
 import { Footer } from './components/Layout/Footer';
 import { HomePage } from './components/Home/HomePage';
 import { LoginForm } from './components/Auth/LoginForm';
-import { RegisterForm } from './components/Auth/RegisterForm';
+import RegisterForm from './components/Auth/RegisterForm';
 import { DonorSearch } from './components/Search/DonorSearch';
 import { UserDashboard } from './components/Dashboard/UserDashboard';
 import { AdminPanel } from './components/Admin/AdminPanel';
@@ -14,40 +14,103 @@ function App() {
   const { user, isAuthenticated, loading, login, register, logout, updateUser } = useAuth();
   const [currentPage, setCurrentPage] = useState('home');
 
+  // Debug effect to track user changes
+  useEffect(() => {
+    console.log('App: User state changed:', user);
+    console.log('App: Is authenticated:', isAuthenticated);
+  }, [user, isAuthenticated]);
+
   useEffect(() => {
     // Initialize sample data
-    storageUtils.initializeSampleData();
+    try {
+      storageUtils.initializeSampleData();
+      console.log('App: Sample data initialized');
+    } catch (error) {
+      console.error('App: Failed to initialize sample data:', error);
+    }
   }, []);
 
   const handleLogin = async (email: string, password: string) => {
-  const result = await login(email, password);
-  if (result.success) {
-    // User রোল অনুযায়ী redirect করুন
-    if (user?.role === 'admin') {
-      setCurrentPage('admin');
-    } else if (user?.role === 'donor' || user?.role === 'recipient') {
-      setCurrentPage('dashboard');
+    console.log('App: Handling login...');
+    const result = await login(email, password);
+    
+    if (result.success) {
+      console.log('App: Login successful, redirecting...');
+      // User রোল অনুযায়ী redirect করুন
+      if (user?.role === 'admin') {
+        setCurrentPage('admin');
+      } else if (user?.role === 'donor' || user?.role === 'recipient') {
+        setCurrentPage('dashboard');
+      } else {
+        setCurrentPage('home');
+      }
     } else {
-      setCurrentPage('home');
+      console.log('App: Login failed:', result.error);
     }
-  }
-  return result;
-};
+    
+    return result;
+  };
 
   const handleRegister = async (userData: any) => {
+    console.log('App: Handling registration...');
+    console.log('App: Registration data received:', userData);
+    
     const result = await register(userData);
+    
     if (result.success) {
-      setCurrentPage('login');
+      console.log('App: Registration successful');
+      
+      // যদি auto-login successful হয়, তাহলে role based redirect করুন
+      if (result.autoLogin && result.user) {
+        const currentUser = result.user;
+        console.log('App: Auto-login successful, redirecting based on role:', currentUser.role);
+        
+        setTimeout(() => {
+          if (currentUser.role === 'admin') {
+            setCurrentPage('admin');
+          } else if (currentUser.role === 'donor' || currentUser.role === 'recipient') {
+            setCurrentPage('dashboard');
+          } else {
+            setCurrentPage('home');
+          }
+        }, 2000);
+      } else if (result.autoLogin && !result.user) {
+        // Auto-login successful কিন্তু user data পাওয়া যায়নি, useAuth state check করি
+        console.log('App: Auto-login successful but no user data, checking auth state...');
+        setTimeout(() => {
+          if (user) {
+            console.log('App: Found user in auth state:', user.role);
+            if (user.role === 'admin') {
+              setCurrentPage('admin');
+            } else if (user.role === 'donor' || user.role === 'recipient') {
+              setCurrentPage('dashboard');
+            } else {
+              setCurrentPage('home');
+            }
+          } else {
+            console.log('App: No user found, redirecting to home');
+            setCurrentPage('home');
+          }
+        }, 2000);
+      } else {
+        console.log('App: Auto-login failed, will redirect to login page from RegisterForm');
+        // Auto-login fail হলে RegisterForm component নিজেই login page এ redirect করবে
+      }
+    } else {
+      console.log('App: Registration failed:', result.error);
     }
+    
     return result;
   };
 
   const handleLogout = () => {
+    console.log('App: Handling logout...');
     logout();
     setCurrentPage('home');
   };
 
   const handleNavigate = (page: string) => {
+    console.log('App: Navigating to:', page);
     setCurrentPage(page);
   };
 
@@ -63,6 +126,8 @@ function App() {
   }
 
   const renderPage = () => {
+    console.log('App: Rendering page:', currentPage);
+    
     switch (currentPage) {
       case 'login':
         return (
@@ -84,13 +149,33 @@ function App() {
         return user ? (
           <UserDashboard user={user} onUpdateUser={updateUser} />
         ) : (
-          <div>Please log in to view your dashboard</div>
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-gray-600 mb-4">Please log in to view your dashboard</p>
+              <button 
+                onClick={() => setCurrentPage('login')}
+                className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Go to Login
+              </button>
+            </div>
+          </div>
         );
       case 'admin':
         return user?.role === 'admin' ? (
           <AdminPanel currentUser={user} />
         ) : (
-          <div>Access denied. Admin only.</div>
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-red-600 mb-4">Access denied. Admin only.</p>
+              <button 
+                onClick={() => setCurrentPage('home')}
+                className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                Go to Home
+              </button>
+            </div>
+          </div>
         );
       case 'home':
       default:

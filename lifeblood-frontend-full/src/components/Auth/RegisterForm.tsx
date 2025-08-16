@@ -1,343 +1,562 @@
+// import React, { useState } from 'react';
+// import { User, Mail, Lock, Phone, MapPin, Droplet, UserPlus, AlertCircle, Home } from 'lucide-react';
+// import { BloodGroup } from '../../types';
+// import { locationUtils } from '../../utils/location';
+// import { apiService } from '../../services/apiService';
+
+// interface RegisterFormData {
+//   fullName: string;
+//   email: string;
+//   password: string;
+//   phone: string;
+//   division: string;
+//   district: string;
+//   upazila: string;
+//   address: string; // ✅ Added address field
+//   bloodGroup: string;
+// }
+
+// interface RegisterFormProps {
+//   onRegister: (userData: any) => Promise<{ success: boolean; message?: string; error?: string; user?: any }>;
+//   onNavigateToLogin: () => void;
+// }
+
+// const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onNavigateToLogin }) => {
+//   const [formData, setFormData] = useState<RegisterFormData>({
+//     fullName: "",
+//     email: "",
+//     password: "",
+//     phone: "",
+//     division: "",
+//     district: "",
+//     upazila: "",
+//     address: "", // ✅ Added address field
+//     bloodGroup: "",
+//   });
+
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+//   const [success, setSuccess] = useState(false);
+
+//   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+//     setFormData({ ...formData, [e.target.name]: e.target.value });
+//   };
+
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     setLoading(true);
+//     setError(null);
+//     setSuccess(false);
+
+//     try {
+//       console.log("Sending registration request through useAuth...");
+      
+//       // Clean data for registration
+//       const result = await onRegister({
+//         fullName: formData.fullName,
+//         email: formData.email,
+//         password: formData.password, // ✅ Simple field name
+//         phone: formData.phone,
+//         division: formData.division,
+//         district: formData.district,
+//         upazila: formData.upazila,
+//         address: formData.address, // ✅ Added address
+//         bloodGroup: formData.bloodGroup,
+//       });
+
+//       console.log("Registration result:", result);
+
+//       if (result.success) {
+//         setSuccess(true);
+//         setFormData({
+//           fullName: "",
+//           email: "",
+//           password: "",
+//           phone: "",
+//           division: "",
+//           district: "",
+//           upazila: "",
+//           address: "", // ✅ Reset address
+//           bloodGroup: "",
+//         });
+
+//         // সফল হলে লগইন পেজে পাঠানো
+//         setTimeout(() => {
+//           onNavigateToLogin();
+//         }, 1500);
+//       } else {
+//         setError(result.error || "Registration failed");
+//       }
+
+//     } catch (err: any) {
+//       console.error("Registration error:", err);
+//       setError(err.message || "Registration failed");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-4">
+//       <div className="max-w-md w-full mx-auto p-8 bg-white rounded-2xl shadow-xl">
+//         <div className="text-center mb-6">
+//           <h2 className="text-3xl font-bold text-gray-800 mb-2">Join LifeBlood</h2>
+//           <p className="text-gray-600">Create your account to save lives</p>
+//         </div>
+
+//         {error && (
+//           <div className="text-red-600 mb-4 p-3 border border-red-300 rounded-lg bg-red-50 flex items-center">
+//             <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0" />
+//             <span className="text-sm">{error}</span>
+//           </div>
+//         )}
+        
+//         {success && (
+//           <div className="text-green-600 mb-4 p-3 border border-green-300 rounded-lg bg-green-50 flex items-center">
+//             <div className="w-5 h-5 mr-2 flex-shrink-0 bg-green-500 rounded-full flex items-center justify-center">
+//               <div className="w-2 h-2 bg-white rounded-full"></div>
+//             </div>
+//             <span className="text-sm">Registration successful! Logging you in...</span>
+//           </div>
+//         )}
+        
+//         <form onSubmit={handleSubmit} className="space-y-4">
+//           <div className="relative">
+//             <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+//             <input 
+//               type="text" 
+//               name="fullName" 
+//               placeholder="Full Name" 
+//               value={formData.fullName} 
+//               onChange={handleChange} 
+//               required 
+//               className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+//             />
+//           </div>
+
+//           <div className="relative">
+//             <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+//             <input 
+//               type="email" 
+//               name="email" 
+//               placeholder="Email Address" 
+//               value={formData.email} 
+//               onChange={handleChange} 
+//               required 
+//               className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+//             />
+//           </div>
+
+//           <div className="relative">
+//             <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+//             <input 
+//               type="password" 
+//               name="password" 
+//               placeholder="Password" 
+//               value={formData.password} 
+//               onChange={handleChange} 
+//               required 
+//               minLength={6}
+//               className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+//             />
+//           </div>
+
+//           <div className="relative">
+//             <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+//             <input 
+//               type="tel" 
+//               name="phone" 
+//               placeholder="Phone Number" 
+//               value={formData.phone} 
+//               onChange={handleChange} 
+//               required 
+//               className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+//             />
+//           </div>
+
+//           <div className="grid grid-cols-1 gap-4">
+//             <div className="relative">
+//               <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+//               <input 
+//                 type="text" 
+//                 name="division" 
+//                 placeholder="Division (e.g., Dhaka)" 
+//                 value={formData.division} 
+//                 onChange={handleChange} 
+//                 required 
+//                 className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+//               />
+//             </div>
+
+//             <input 
+//               type="text" 
+//               name="district" 
+//               placeholder="District (e.g., Dhaka)" 
+//               value={formData.district} 
+//               onChange={handleChange} 
+//               required 
+//               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+//             />
+
+//             <input 
+//               type="text" 
+//               name="upazila" 
+//               placeholder="Upazila (e.g., Wari)" 
+//               value={formData.upazila} 
+//               onChange={handleChange} 
+//               required 
+//               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+//             />
+//           </div>
+
+//           {/* ✅ Address Field Added */}
+//           <div className="relative">
+//             <Home className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+//             <input 
+//               type="text" 
+//               name="address" 
+//               placeholder="Full Address (Optional)" 
+//               value={formData.address} 
+//               onChange={handleChange} 
+//               className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+//             />
+//           </div>
+
+//           <div className="relative">
+//             <Droplet className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+//             <select 
+//               name="bloodGroup" 
+//               value={formData.bloodGroup} 
+//               onChange={handleChange} 
+//               required 
+//               className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 appearance-none bg-white"
+//             >
+//               <option value="">Select Blood Group</option>
+//               <option value="A+">A+</option>
+//               <option value="A-">A-</option>
+//               <option value="B+">B+</option>
+//               <option value="B-">B-</option>
+//               <option value="O+">O+</option>
+//               <option value="O-">O-</option>
+//               <option value="AB+">AB+</option>
+//               <option value="AB-">AB-</option>
+//             </select>
+//           </div>
+
+//           <button 
+//             type="submit" 
+//             disabled={loading} 
+//             className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-4 rounded-lg hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 font-semibold text-lg shadow-lg"
+//           >
+//             {loading ? (
+//               <>
+//                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+//                 Creating Account...
+//               </>
+//             ) : (
+//               <>
+//                 <UserPlus className="w-5 h-5 mr-2" />
+//                 Create Account
+//               </>
+//             )}
+//           </button>
+//         </form>
+
+//         <div className="mt-6 text-center">
+//           <p className="text-gray-600">
+//             Already have an account?{' '}
+//             <button 
+//               onClick={onNavigateToLogin}
+//               className="text-red-500 hover:text-red-600 font-semibold transition-colors duration-200"
+//             >
+//               Sign in here
+//             </button>
+//           </p>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default RegisterForm;
 import React, { useState } from 'react';
-import { User, Mail, Lock, Phone, MapPin, Droplet, UserPlus, AlertCircle } from 'lucide-react';
+import { User, Mail, Lock, Phone, MapPin, Droplet, UserPlus, AlertCircle, Home } from 'lucide-react';
 import { BloodGroup } from '../../types';
 import { locationUtils } from '../../utils/location';
+import { apiService } from '../../services/apiService';
+
+interface RegisterFormData {
+  fullName: string;
+  email: string;
+  password: string;
+  phone: string;
+  division: string;
+  district: string;
+  upazila: string;
+  address: string; // ✅ Added address field
+  bloodGroup: string;
+}
 
 interface RegisterFormProps {
-  onRegister: (userData: any) => Promise<{ success: boolean; error?: string }>;
+  onRegister: (userData: any) => Promise<{ success: boolean; message?: string; error?: string; user?: any; autoLogin?: boolean }>;
   onNavigateToLogin: () => void;
 }
 
-export const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onNavigateToLogin }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    bloodGroup: 'O+' as BloodGroup,
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    role: 'donor' as 'donor' | 'recipient'
+const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onNavigateToLogin }) => {
+  const [formData, setFormData] = useState<RegisterFormData>({
+    fullName: "",
+    email: "",
+    password: "",
+    phone: "",
+    division: "",
+    district: "",
+    upazila: "",
+    address: "", // ✅ Added address field
+    bloodGroup: "",
   });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const bloodGroups: BloodGroup[] = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return;
-    }
-
     setLoading(true);
+    setError(null);
+    setSuccess(false);
 
     try {
-      // Get coordinates for the address
-      const coordinates = await locationUtils.geocodeAddress(
-        formData.address,
-        formData.city,
-        formData.state
-      );
-
-      const userData = {
-        ...formData,
-        latitude: coordinates?.latitude,
-        longitude: coordinates?.longitude
-      };
-
-      const result = await onRegister(userData);
+      console.log("Sending registration request through useAuth...");
       
-      if (!result.success) {
-        setError(result.error || 'Registration failed');
+      // Clean data for registration
+      const result = await onRegister({
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password, // ✅ Simple field name
+        phone: formData.phone,
+        division: formData.division,
+        district: formData.district,
+        upazila: formData.upazila,
+        address: formData.address, // ✅ Added address
+        bloodGroup: formData.bloodGroup,
+      });
+
+      console.log("Registration result:", result);
+
+      if (result.success) {
+        setSuccess(true);
+        setFormData({
+          fullName: "",
+          email: "",
+          password: "",
+          phone: "",
+          division: "",
+          district: "",
+          upazila: "",
+          address: "", // ✅ Reset address
+          bloodGroup: "",
+        });
+
+        // সফল হলে লগইন পেজে পাঠানো
+        setTimeout(() => {
+          onNavigateToLogin();
+        }, 1500);
+      } else {
+        setError(result.error || "Registration failed");
       }
-    } catch (err) {
-      setError('Registration failed. Please try again.');
+
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      setError(err.message || "Registration failed");
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-extrabold text-gray-900">
-            Join LifeBlood Community
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Register to help save lives by donating blood or finding donors
+    <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-4">
+      <div className="max-w-md w-full mx-auto p-8 bg-white rounded-2xl shadow-xl">
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Join LifeBlood</h2>
+          <p className="text-gray-600">Create your account to save lives</p>
+        </div>
+
+        {error && (
+          <div className="text-red-600 mb-4 p-3 border border-red-300 rounded-lg bg-red-50 flex items-center">
+            <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0" />
+            <span className="text-sm">{error}</span>
+          </div>
+        )}
+        
+        {success && (
+          <div className="text-green-600 mb-4 p-3 border border-green-300 rounded-lg bg-green-50 flex items-center">
+            <div className="w-5 h-5 mr-2 flex-shrink-0 bg-green-500 rounded-full flex items-center justify-center">
+              <div className="w-2 h-2 bg-white rounded-full"></div>
+            </div>
+            <span className="text-sm">Registration successful! Logging you in...</span>
+          </div>
+        )}
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="relative">
+            <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <input 
+              type="text" 
+              name="fullName" 
+              placeholder="Full Name" 
+              value={formData.fullName} 
+              onChange={handleChange} 
+              required 
+              className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+            />
+          </div>
+
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <input 
+              type="email" 
+              name="email" 
+              placeholder="Email Address" 
+              value={formData.email} 
+              onChange={handleChange} 
+              required 
+              className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+            />
+          </div>
+
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <input 
+              type="password" 
+              name="password" 
+              placeholder="Password" 
+              value={formData.password} 
+              onChange={handleChange} 
+              required 
+              minLength={6}
+              className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+            />
+          </div>
+
+          <div className="relative">
+            <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <input 
+              type="tel" 
+              name="phone" 
+              placeholder="Phone Number" 
+              value={formData.phone} 
+              onChange={handleChange} 
+              required 
+              className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <div className="relative">
+              <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <input 
+                type="text" 
+                name="division" 
+                placeholder="Division (e.g., Dhaka)" 
+                value={formData.division} 
+                onChange={handleChange} 
+                required 
+                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+              />
+            </div>
+
+            <input 
+              type="text" 
+              name="district" 
+              placeholder="District (e.g., Dhaka)" 
+              value={formData.district} 
+              onChange={handleChange} 
+              required 
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+            />
+
+            <input 
+              type="text" 
+              name="upazila" 
+              placeholder="Upazila (e.g., Wari)" 
+              value={formData.upazila} 
+              onChange={handleChange} 
+              required 
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+            />
+          </div>
+
+          {/* ✅ Address Field Added */}
+          <div className="relative">
+            <Home className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <input 
+              type="text" 
+              name="address" 
+              placeholder="Full Address (Optional)" 
+              value={formData.address} 
+              onChange={handleChange} 
+              className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200" 
+            />
+          </div>
+
+          <div className="relative">
+            <Droplet className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <select 
+              name="bloodGroup" 
+              value={formData.bloodGroup} 
+              onChange={handleChange} 
+              required 
+              className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 appearance-none bg-white"
+            >
+              <option value="">Select Blood Group</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+            </select>
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-4 rounded-lg hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 font-semibold text-lg shadow-lg"
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                Creating Account...
+              </>
+            ) : (
+              <>
+                <UserPlus className="w-5 h-5 mr-2" />
+                Create Account
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Already have an account?{' '}
+            <button 
+              onClick={onNavigateToLogin}
+              className="text-red-500 hover:text-red-600 font-semibold transition-colors duration-200"
+            >
+              Sign in here
+            </button>
           </p>
         </div>
-        
-        <form className="bg-white shadow-lg rounded-lg p-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <div className="flex items-center">
-                <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-                <span className="text-sm text-red-700">{error}</span>
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Full Name
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="name"
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                  placeholder="Enter your full name"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email Address
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  className="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                  placeholder="Enter your email"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="password"
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                  className="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                  placeholder="Create a password"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                  placeholder="Confirm your password"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="bloodGroup" className="block text-sm font-medium text-gray-700">
-                Blood Group
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Droplet className="h-5 w-5 text-gray-400" />
-                </div>
-                <select
-                  id="bloodGroup"
-                  value={formData.bloodGroup}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bloodGroup: e.target.value as BloodGroup }))}
-                  className="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                >
-                  {bloodGroups.map((group) => (
-                    <option key={group} value={group}>{group}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                Phone Number
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Phone className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="phone"
-                  type="tel"
-                  required
-                  value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                  className="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                  placeholder="+1-555-0123"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-              Street Address
-            </label>
-            <div className="mt-1 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MapPin className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="address"
-                type="text"
-                required
-                value={formData.address}
-                onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                className="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                placeholder="123 Main Street"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                City
-              </label>
-              <input
-                id="city"
-                type="text"
-                required
-                value={formData.city}
-                onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                placeholder="New York"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="state" className="block text-sm font-medium text-gray-700">
-                State
-              </label>
-              <input
-                id="state"
-                type="text"
-                required
-                value={formData.state}
-                onChange={(e) => setFormData(prev => ({ ...prev, state: e.target.value }))}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                placeholder="NY"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700">
-                ZIP Code
-              </label>
-              <input
-                id="zipCode"
-                type="text"
-                required
-                value={formData.zipCode}
-                onChange={(e) => setFormData(prev => ({ ...prev, zipCode: e.target.value }))}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                placeholder="10001"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Account Type
-            </label>
-            <div className="mt-2 space-y-2">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  value="donor"
-                  checked={formData.role === 'donor'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'donor' }))}
-                  className="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
-                />
-                <span className="ml-3 text-sm text-gray-700">
-                  Blood Donor - I want to donate blood and help save lives
-                </span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  value="recipient"
-                  checked={formData.role === 'recipient'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'recipient' }))}
-                  className="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
-                />
-                <span className="ml-3 text-sm text-gray-700">
-                  Recipient - I need to find blood donors
-                </span>
-              </label>
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <UserPlus className="h-5 w-5 mr-2" />
-              {loading ? 'Creating Account...' : 'Create Account'}
-            </button>
-          </div>
-
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <button
-                type="button"
-                onClick={onNavigateToLogin}
-                className="font-medium text-red-600 hover:text-red-500"
-              >
-                Sign in here
-              </button>
-            </p>
-          </div>
-        </form>
       </div>
     </div>
   );
 };
+
+export default RegisterForm;

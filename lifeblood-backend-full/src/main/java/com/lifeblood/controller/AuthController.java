@@ -20,8 +20,17 @@ public class AuthController {
     @POST
     @Path("/register")
     public Response register(User user) {
-        authService.register(user);
-        return Response.ok().build();
+        System.out.println("Received user data: " + user);
+        try {
+            authService.register(user);
+            return Response.ok().build();
+        } catch (Exception e) {
+            System.err.println("Registration error: " + e.getMessage());
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+//                    .entity(new ErrorResponse("Registration failed: " + e.getMessage()))
+                    .build();
+        }
     }
 
     @POST

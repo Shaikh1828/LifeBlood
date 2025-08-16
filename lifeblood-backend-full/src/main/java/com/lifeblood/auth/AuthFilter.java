@@ -25,6 +25,11 @@ public class AuthFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
+        // Preflight request হলে সরাসরি pass করে দেবে
+        if ("OPTIONS".equalsIgnoreCase(requestContext.getMethod())) {
+            return;
+        }
+
         String authHeader = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
         System.out.println("Received Auth Header: " + authHeader);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -38,11 +43,12 @@ public class AuthFilter implements ContainerRequestFilter {
             String userId = claims.getBody().getSubject();
             String role = claims.getBody().get("role", String.class);
 
+            // চাইলে এখানে userId / role দিয়ে context set করতে পারো
         } catch (JwtException e) {
             System.out.println("JWT validation failed: " + e.getMessage());
-            e.printStackTrace(); // Full stack trace dekhabe
+            e.printStackTrace();
             throw new WebApplicationException("Invalid or expired token", Response.Status.UNAUTHORIZED);
         }
-
     }
+
 }
