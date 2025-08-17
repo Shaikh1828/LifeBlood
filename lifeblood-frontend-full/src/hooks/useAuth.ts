@@ -9,21 +9,60 @@
 //     loading: true,
 //   });
 
+//   // FIXED: Proper token validation and user data retrieval
 //   useEffect(() => {
-//     const token = localStorage.getItem('token');
-//     if (token) {
-//       setAuthState({
-//         user: { id: '', email: '', role: '', name: '', bloodGroup: '' },
-//         isAuthenticated: true,
-//         loading: false,
-//       });
-//     } else {
-//       setAuthState({
-//         user: null,
-//         isAuthenticated: false,
-//         loading: false,
-//       });
-//     }
+//     const initializeAuth = async () => {
+//       console.log('useAuth: Initializing authentication...');
+      
+//       // Check if API service considers us authenticated
+//       if (apiService.isAuthenticated()) {
+//         try {
+//           console.log('useAuth: User is authenticated, checking stored data...');
+          
+//           // Try to get stored user data
+//           const storedUser = localStorage.getItem('user');
+          
+//           if (storedUser) {
+//             const userData = JSON.parse(storedUser);
+//             console.log('useAuth: Restored user from storage:', userData);
+            
+//             setAuthState({
+//               user: userData,
+//               isAuthenticated: true,
+//               loading: false,
+//             });
+//           } else {
+//             console.log('useAuth: Token exists but no user data, clearing...');
+            
+//             // Clear invalid token
+//             apiService.logout();
+//             setAuthState({
+//               user: null,
+//               isAuthenticated: false,
+//               loading: false,
+//             });
+//           }
+//         } catch (error) {
+//           console.error('useAuth: Error restoring auth state:', error);
+//           apiService.logout();
+//           localStorage.removeItem('user');
+//           setAuthState({
+//             user: null,
+//             isAuthenticated: false,
+//             loading: false,
+//           });
+//         }
+//       } else {
+//         console.log('useAuth: Not authenticated');
+//         setAuthState({
+//           user: null,
+//           isAuthenticated: false,
+//           loading: false,
+//         });
+//       }
+//     };
+
+//     initializeAuth();
 //   }, []);
 
 //   const login = async (
@@ -32,10 +71,23 @@
 //   ): Promise<{ success: boolean; error?: string }> => {
 //     try {
 //       console.log('useAuth: Starting login process...');
+//       setAuthState(prev => ({ ...prev, loading: true }));
+      
 //       const response = await apiService.login({ email, password });
 //       console.log('useAuth: Login response received:', response);
       
+//       // FIXED: Properly handle user data from response
 //       const userData = response;
+      
+//       // Ensure user has required fields
+//       if (!userData.id) {
+//         console.error('useAuth: User data missing ID:', userData);
+//         throw new Error('Invalid user data received');
+//       }
+
+//       // Store user data in localStorage for persistence
+//       localStorage.setItem('user', JSON.stringify(userData));
+//       console.log('useAuth: User data stored in localStorage');
 
 //       setAuthState({
 //         user: userData,
@@ -101,19 +153,16 @@
 //       const response = await apiService.register(userData);
 //       console.log('useAuth: Registration successful:', response);
 
-//       // Auto-login after successful registration
-//       console.log('useAuth: Auto-logging in after registration...');
+//       // FIXED: Simplified auto-login - wait longer and handle properly
+//       console.log('useAuth: Starting auto-login after registration...');
       
-//       // Wait a bit for registration to complete
-//       await new Promise(resolve => setTimeout(resolve, 500));
+//       // Wait for registration to complete on server
+//       await new Promise(resolve => setTimeout(resolve, 1000));
       
 //       const loginResult = await login(userData.email, userData.password);
       
 //       if (loginResult.success) {
 //         console.log('useAuth: Auto-login successful after registration');
-//         // Wait for state to update properly
-//         await new Promise(resolve => setTimeout(resolve, 100));
-        
 //         return { 
 //           success: true, 
 //           message: 'Registration and login successful!',
@@ -125,7 +174,7 @@
 //         return { 
 //           success: true, 
 //           message: 'Registration successful! Please login manually.',
-//           error: 'Auto-login failed',
+//           error: 'Auto-login failed: ' + loginResult.error,
 //           autoLogin: false
 //         };
 //       }
@@ -168,6 +217,7 @@
 //   const logout = () => {
 //     console.log('useAuth: Logging out...');
 //     apiService.logout();
+//     localStorage.removeItem('user'); // Also remove user data
 //     setAuthState({
 //       user: null,
 //       isAuthenticated: false,
@@ -184,6 +234,10 @@
 //           parseInt(authState.user.id),
 //           updatedUser
 //         );
+        
+//         // Update localStorage as well
+//         localStorage.setItem('user', JSON.stringify(response));
+        
 //         setAuthState((prev) => ({
 //           ...prev,
 //           user: response,
@@ -196,12 +250,173 @@
 //     }
 //   };
 
+//   // FIXED: Enhanced authentication validation
+//   const validateAuth = (): boolean => {
+//     const isValid = !!(authState.user && authState.isAuthenticated && authState.user.id && apiService.isAuthenticated());
+//     console.log('useAuth: Auth validation result:', isValid, {
+//       hasUser: !!authState.user,
+//       isAuthenticated: authState.isAuthenticated,
+//       hasUserId: !!authState.user?.id,
+//       userId: authState.user?.id,
+//       apiServiceAuth: apiService.isAuthenticated()
+//     });
+//     return isValid;
+//   };
+
+//   // FIXED: Simplified donation management using apiService directly
+//   const addDonation = async (donationData: {
+//     donationDate: string;
+//     location: string;
+//     notes?: string;
+//     recipientContact?: string;
+//   }): Promise<{ success: boolean; error?: string }> => {
+//     console.log('useAuth: Starting addDonation...');
+//     console.log('useAuth: Current auth state:', {
+//       hasUser: !!authState.user,
+//       isAuthenticated: authState.isAuthenticated,
+//       userId: authState.user?.id
+//     });
+
+//     // Use validation helper
+//     if (!validateAuth()) {
+//       console.error('useAuth: Authentication validation failed');
+//       return { success: false, error: 'User not authenticated. Please login again.' };
+//     }
+
+//     try {
+//       console.log('useAuth: Adding donation record...');
+      
+//       // FIXED: Use apiService directly - it handles user ID detection
+//       const response = await apiService.addDonation(donationData);
+//       console.log('useAuth: Donation added successfully:', response);
+
+//       // Update user's last donation date and availability
+//       const updatedUser = {
+//         ...authState.user!,
+//         lastDonationDate: donationData.donationDate,
+//         isAvailable: false
+//       };
+
+//       // Update localStorage
+//       localStorage.setItem('user', JSON.stringify(updatedUser));
+
+//       setAuthState(prev => ({
+//         ...prev,
+//         user: updatedUser
+//       }));
+
+//       return { success: true };
+//     } catch (error: any) {
+//       console.error('useAuth: Failed to add donation:', error);
+      
+//       let errorMessage = 'Failed to add donation';
+      
+//       if (error.response) {
+//         switch (error.response.status) {
+//           case 400:
+//             errorMessage = error.response.data?.message || 'Invalid donation data provided';
+//             break;
+//           case 401:
+//             errorMessage = 'Authentication expired. Please login again.';
+//             // Clear auth state on 401
+//             logout();
+//             break;
+//           case 403:
+//             errorMessage = 'Access denied';
+//             break;
+//           case 500:
+//             errorMessage = 'Server error. Please try again later';
+//             break;
+//           default:
+//             errorMessage = `Failed to add donation: ${error.response.status}`;
+//         }
+//       } else if (error.request) {
+//         errorMessage = 'Network error. Please check your connection';
+//       } else {
+//         errorMessage = error.message || 'Failed to add donation';
+//       }
+
+//       return { success: false, error: errorMessage };
+//     }
+//   };
+
+//   const getDonations = async (): Promise<{ success: boolean; data?: any[]; error?: string }> => {
+//     console.log('useAuth: Starting getDonations...');
+//     console.log('useAuth: Current auth state:', {
+//       hasUser: !!authState.user,
+//       isAuthenticated: authState.isAuthenticated,
+//       userId: authState.user?.id
+//     });
+
+//     // Use validation helper
+//     if (!validateAuth()) {
+//       console.error('useAuth: Authentication validation failed');
+//       return { success: false, error: 'User not authenticated. Please login again.' };
+//     }
+
+//     try {
+//       console.log('useAuth: Fetching donation records...');
+      
+//       // FIXED: Use apiService directly - it handles user ID detection
+//       const donations = await apiService.getDonations();
+//       console.log('useAuth: Donations fetched successfully:', donations);
+
+//       // Transform backend data to frontend format if needed
+//       const transformedDonations = donations.map((donation: any) => ({
+//         id: donation.id?.toString() || Math.random().toString(),
+//         donorId: donation.donor?.id?.toString() || authState.user!.id,
+//         date: donation.donationDate?.split('T')[0] || donation.donationDate, // Convert ISO date to YYYY-MM-DD
+//         donationDate: donation.donationDate, // Keep original format too
+//         location: donation.location,
+//         notes: donation.notes || '',
+//         recipientContact: donation.recipientContact || '',
+//         createdAt: donation.createdAt || donation.donationDate
+//       }));
+
+//       return { success: true, data: transformedDonations };
+//     } catch (error: any) {
+//       console.error('useAuth: Failed to fetch donations:', error);
+      
+//       let errorMessage = 'Failed to fetch donations';
+      
+//       if (error.response) {
+//         switch (error.response.status) {
+//           case 401:
+//             errorMessage = 'Authentication expired. Please login again.';
+//             // Clear auth state on 401
+//             logout();
+//             break;
+//           case 403:
+//             errorMessage = 'Access denied';
+//             break;
+//           case 404:
+//             console.log('useAuth: No donations found, returning empty array');
+//             return { success: true, data: [] };
+//           case 500:
+//             errorMessage = 'Server error. Please try again later';
+//             break;
+//           default:
+//             errorMessage = `Failed to fetch donations: ${error.response.status}`;
+//         }
+//       } else if (error.request) {
+//         errorMessage = 'Network error. Please check your connection';
+//       } else {
+//         errorMessage = error.message || 'Failed to fetch donations';
+//       }
+
+//       return { success: false, error: errorMessage };
+//     }
+//   };
+
 //   return {
 //     ...authState,
 //     login,
 //     register,
 //     logout,
 //     updateUser,
+//     addDonation,
+//     getDonations,
+//     validateAuth, // Expose validation helper
 //   };
 // };
 import { useState, useEffect } from 'react';
@@ -215,21 +430,60 @@ export const useAuth = () => {
     loading: true,
   });
 
+  // FIXED: Proper token validation and user data retrieval
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setAuthState({
-        user: { id: '', email: '', role: '', name: '', bloodGroup: '' },
-        isAuthenticated: true,
-        loading: false,
-      });
-    } else {
-      setAuthState({
-        user: null,
-        isAuthenticated: false,
-        loading: false,
-      });
-    }
+    const initializeAuth = async () => {
+      console.log('useAuth: Initializing authentication...');
+      
+      // Check if API service considers us authenticated
+      if (apiService.isAuthenticated()) {
+        try {
+          console.log('useAuth: User is authenticated, checking stored data...');
+          
+          // Try to get stored user data
+          const storedUser = localStorage.getItem('user');
+          
+          if (storedUser) {
+            const userData = JSON.parse(storedUser);
+            console.log('useAuth: Restored user from storage:', userData);
+            
+            setAuthState({
+              user: userData,
+              isAuthenticated: true,
+              loading: false,
+            });
+          } else {
+            console.log('useAuth: Token exists but no user data, clearing...');
+            
+            // Clear invalid token
+            apiService.logout();
+            setAuthState({
+              user: null,
+              isAuthenticated: false,
+              loading: false,
+            });
+          }
+        } catch (error) {
+          console.error('useAuth: Error restoring auth state:', error);
+          apiService.logout();
+          localStorage.removeItem('user');
+          setAuthState({
+            user: null,
+            isAuthenticated: false,
+            loading: false,
+          });
+        }
+      } else {
+        console.log('useAuth: Not authenticated');
+        setAuthState({
+          user: null,
+          isAuthenticated: false,
+          loading: false,
+        });
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (
@@ -238,10 +492,23 @@ export const useAuth = () => {
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       console.log('useAuth: Starting login process...');
+      setAuthState(prev => ({ ...prev, loading: true }));
+      
       const response = await apiService.login({ email, password });
       console.log('useAuth: Login response received:', response);
       
+      // FIXED: Properly handle user data from response
       const userData = response;
+      
+      // Ensure user has required fields
+      if (!userData.id) {
+        console.error('useAuth: User data missing ID:', userData);
+        throw new Error('Invalid user data received');
+      }
+
+      // Store user data in localStorage for persistence
+      localStorage.setItem('user', JSON.stringify(userData));
+      console.log('useAuth: User data stored in localStorage');
 
       setAuthState({
         user: userData,
@@ -307,19 +574,16 @@ export const useAuth = () => {
       const response = await apiService.register(userData);
       console.log('useAuth: Registration successful:', response);
 
-      // Auto-login after successful registration
-      console.log('useAuth: Auto-logging in after registration...');
+      // FIXED: Simplified auto-login - wait longer and handle properly
+      console.log('useAuth: Starting auto-login after registration...');
       
-      // Wait a bit for registration to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for registration to complete on server
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       const loginResult = await login(userData.email, userData.password);
       
       if (loginResult.success) {
         console.log('useAuth: Auto-login successful after registration');
-        // Wait for state to update properly
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
         return { 
           success: true, 
           message: 'Registration and login successful!',
@@ -331,7 +595,7 @@ export const useAuth = () => {
         return { 
           success: true, 
           message: 'Registration successful! Please login manually.',
-          error: 'Auto-login failed',
+          error: 'Auto-login failed: ' + loginResult.error,
           autoLogin: false
         };
       }
@@ -374,6 +638,7 @@ export const useAuth = () => {
   const logout = () => {
     console.log('useAuth: Logging out...');
     apiService.logout();
+    localStorage.removeItem('user'); // Also remove user data
     setAuthState({
       user: null,
       isAuthenticated: false,
@@ -390,6 +655,10 @@ export const useAuth = () => {
           parseInt(authState.user.id),
           updatedUser
         );
+        
+        // Update localStorage as well
+        localStorage.setItem('user', JSON.stringify(response));
+        
         setAuthState((prev) => ({
           ...prev,
           user: response,
@@ -402,7 +671,20 @@ export const useAuth = () => {
     }
   };
 
-  // ✅ FIXED: Donation Functions with proper validation
+  // FIXED: Enhanced authentication validation
+  const validateAuth = (): boolean => {
+    const isValid = !!(authState.user && authState.isAuthenticated && authState.user.id && apiService.isAuthenticated());
+    console.log('useAuth: Auth validation result:', isValid, {
+      hasUser: !!authState.user,
+      isAuthenticated: authState.isAuthenticated,
+      hasUserId: !!authState.user?.id,
+      userId: authState.user?.id,
+      apiServiceAuth: apiService.isAuthenticated()
+    });
+    return isValid;
+  };
+
+  // FIXED: Simplified donation management with proper date handling
   const addDonation = async (donationData: {
     donationDate: string;
     location: string;
@@ -410,52 +692,49 @@ export const useAuth = () => {
     recipientContact?: string;
   }): Promise<{ success: boolean; error?: string }> => {
     console.log('useAuth: Starting addDonation...');
-    console.log('useAuth: Current user state:', authState.user);
-    console.log('useAuth: Donation data:', donationData);
+    console.log('useAuth: Donation data received:', donationData);
+    console.log('useAuth: Current auth state:', {
+      hasUser: !!authState.user,
+      isAuthenticated: authState.isAuthenticated,
+      userId: authState.user?.id
+    });
 
-    // ✅ Enhanced validation
-    if (!authState.user || !authState.isAuthenticated) {
-      console.error('useAuth: User not authenticated');
-      return { success: false, error: 'User not authenticated' };
-    }
-
-    if (!authState.user.id) {
-      console.error('useAuth: User ID is missing');
-      return { success: false, error: 'User ID is missing' };
-    }
-
-    // ✅ Validate donor ID is a valid number
-    const donorId = parseInt(authState.user.id);
-    if (isNaN(donorId) || donorId <= 0) {
-      console.error('useAuth: Invalid donor ID:', authState.user.id);
-      return { success: false, error: 'Invalid donor ID' };
+    // Use validation helper
+    if (!validateAuth()) {
+      console.error('useAuth: Authentication validation failed');
+      return { success: false, error: 'User not authenticated. Please login again.' };
     }
 
     try {
-      console.log('useAuth: Adding donation record for donor ID:', donorId);
+      console.log('useAuth: Adding donation record...');
       
-      // ✅ Properly structured donation record
-      const donationRecord = {
-        donor: { 
-          id: donorId  // ✅ Ensure this is a valid number
-        },
-        donationDate: new Date(donationData.donationDate).toISOString(),
-        location: donationData.location.trim(),
-        notes: donationData.notes?.trim() || '',
-        recipientContact: donationData.recipientContact?.trim() || ''
-      };
-
-      console.log('useAuth: Sending donation record:', donationRecord);
-
-      const response = await apiService.addDonation(donationRecord);
+      // FIXED: Validate date format before sending
+      if (!donationData.donationDate || donationData.donationDate.trim() === '') {
+        return { success: false, error: 'Please select a valid donation date.' };
+      }
+      
+      // Check if date is in the future
+      const selectedDate = new Date(donationData.donationDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to compare only dates
+      
+      if (selectedDate > today) {
+        return { success: false, error: 'Donation date cannot be in the future.' };
+      }
+      
+      // FIXED: Use apiService directly - it handles user ID detection and date formatting
+      const response = await apiService.addDonation(donationData);
       console.log('useAuth: Donation added successfully:', response);
 
       // Update user's last donation date and availability
       const updatedUser = {
-        ...authState.user,
+        ...authState.user!,
         lastDonationDate: donationData.donationDate,
         isAvailable: false
       };
+
+      // Update localStorage
+      localStorage.setItem('user', JSON.stringify(updatedUser));
 
       setAuthState(prev => ({
         ...prev,
@@ -465,18 +744,22 @@ export const useAuth = () => {
       return { success: true };
     } catch (error: any) {
       console.error('useAuth: Failed to add donation:', error);
-      console.error('useAuth: Error details:', error.response?.data);
       
       let errorMessage = 'Failed to add donation';
       
       if (error.response) {
-        console.error('useAuth: Server response:', error.response.status, error.response.data);
         switch (error.response.status) {
           case 400:
-            errorMessage = error.response.data?.message || 'Invalid donation data provided';
+            if (error.response.data?.message?.includes('date')) {
+              errorMessage = 'Please provide a valid donation date in YYYY-MM-DD format';
+            } else {
+              errorMessage = error.response.data?.message || 'Invalid donation data provided';
+            }
             break;
           case 401:
-            errorMessage = 'Authentication required';
+            errorMessage = 'Authentication expired. Please login again.';
+            // Clear auth state on 401
+            logout();
             break;
           case 403:
             errorMessage = 'Access denied';
@@ -499,41 +782,39 @@ export const useAuth = () => {
 
   const getDonations = async (): Promise<{ success: boolean; data?: any[]; error?: string }> => {
     console.log('useAuth: Starting getDonations...');
-    console.log('useAuth: Current user state:', authState.user);
+    console.log('useAuth: Current auth state:', {
+      hasUser: !!authState.user,
+      isAuthenticated: authState.isAuthenticated,
+      userId: authState.user?.id
+    });
 
-    if (!authState.user || !authState.isAuthenticated) {
-      console.error('useAuth: User not authenticated');
-      return { success: false, error: 'User not authenticated' };
-    }
-
-    if (!authState.user.id) {
-      console.error('useAuth: User ID is missing');
-      return { success: false, error: 'User ID is missing' };
-    }
-
-    // ✅ Validate donor ID is a valid number
-    const donorId = parseInt(authState.user.id);
-    if (isNaN(donorId) || donorId <= 0) {
-      console.error('useAuth: Invalid donor ID:', authState.user.id);
-      return { success: false, error: 'Invalid donor ID' };
+    // Use validation helper
+    if (!validateAuth()) {
+      console.error('useAuth: Authentication validation failed');
+      return { success: false, error: 'User not authenticated. Please login again.' };
     }
 
     try {
-      console.log('useAuth: Fetching donation records for donor ID:', donorId);
-      const donations = await apiService.getDonations(donorId);
+      console.log('useAuth: Fetching donation records...');
+      
+      // FIXED: Use apiService directly - it handles user ID detection and date parsing
+      const donations = await apiService.getDonations();
       console.log('useAuth: Donations fetched successfully:', donations);
 
-      // Transform backend data to frontend format if needed
+      // FIXED: Transform backend data to frontend format with proper date handling
       const transformedDonations = donations.map((donation: any) => ({
-        id: donation.id.toString(),
-        donorId: donation.donor.id.toString(),
-        date: donation.donationDate.split('T')[0], // Convert ISO date to YYYY-MM-DD
+        id: donation.id?.toString() || Math.random().toString(),
+        donorId: donation.donor?.id?.toString() || authState.user!.id,
+        date: donation.donationDate, // Already formatted by apiService
+        donationDate: donation.donationDate, // Frontend format (YYYY-MM-DD)
+        donationTimestamp: donation.donationTimestamp, // Keep original timestamp
         location: donation.location,
         notes: donation.notes || '',
         recipientContact: donation.recipientContact || '',
-        createdAt: donation.createdAt || donation.donationDate
+        createdAt: donation.createdAt || donation.donationTimestamp || donation.donationDate
       }));
 
+      console.log('useAuth: Transformed donations:', transformedDonations);
       return { success: true, data: transformedDonations };
     } catch (error: any) {
       console.error('useAuth: Failed to fetch donations:', error);
@@ -543,14 +824,16 @@ export const useAuth = () => {
       if (error.response) {
         switch (error.response.status) {
           case 401:
-            errorMessage = 'Authentication required';
+            errorMessage = 'Authentication expired. Please login again.';
+            // Clear auth state on 401
+            logout();
             break;
           case 403:
             errorMessage = 'Access denied';
             break;
           case 404:
             console.log('useAuth: No donations found, returning empty array');
-            return { success: true, data: [] }; // Return empty array instead of error
+            return { success: true, data: [] };
           case 500:
             errorMessage = 'Server error. Please try again later';
             break;
@@ -567,6 +850,79 @@ export const useAuth = () => {
     }
   };
 
+  // FIXED: Get donation statistics with proper date handling
+  const getDonationStats = async (): Promise<{ 
+    success: boolean; 
+    stats?: {
+      totalDonations: number;
+      lastDonationDate: string | null;
+      donationsThisYear: number;
+      nextEligibleDate?: string;
+    }; 
+    error?: string 
+  }> => {
+    console.log('useAuth: Starting getDonationStats...');
+
+    if (!validateAuth()) {
+      console.error('useAuth: Authentication validation failed');
+      return { success: false, error: 'User not authenticated. Please login again.' };
+    }
+
+    try {
+      const donationsResult = await getDonations();
+      
+      if (!donationsResult.success || !donationsResult.data) {
+        return { success: false, error: donationsResult.error || 'Failed to fetch donations' };
+      }
+
+      const donations = donationsResult.data;
+      
+      // Calculate statistics
+      const totalDonations = donations.length;
+      
+      // Find last donation date
+      let lastDonationDate: string | null = null;
+      let nextEligibleDate: string | null = null;
+      
+      if (donations.length > 0) {
+        // Sort by donation date (most recent first)
+        const sortedDonations = [...donations].sort((a, b) => {
+          const dateA = new Date(a.donationTimestamp || a.donationDate);
+          const dateB = new Date(b.donationTimestamp || b.donationDate);
+          return dateB.getTime() - dateA.getTime();
+        });
+        
+        lastDonationDate = sortedDonations[0].donationDate;
+        
+        // Calculate next eligible date (3 months after last donation)
+        const lastDonation = new Date(sortedDonations[0].donationTimestamp || sortedDonations[0].donationDate);
+        const nextEligible = new Date(lastDonation);
+        nextEligible.setMonth(nextEligible.getMonth() + 3);
+        nextEligibleDate = nextEligible.toISOString().split('T')[0];
+      }
+      
+      // Count donations this year
+      const currentYear = new Date().getFullYear();
+      const donationsThisYear = donations.filter(donation => {
+        const donationYear = new Date(donation.donationTimestamp || donation.donationDate).getFullYear();
+        return donationYear === currentYear;
+      }).length;
+      
+      const stats = {
+        totalDonations,
+        lastDonationDate,
+        donationsThisYear,
+        nextEligibleDate
+      };
+      
+      console.log('useAuth: Donation stats calculated:', stats);
+      return { success: true, stats };
+    } catch (error: any) {
+      console.error('useAuth: Failed to calculate donation stats:', error);
+      return { success: false, error: error.message || 'Failed to calculate donation statistics' };
+    }
+  };
+
   return {
     ...authState,
     login,
@@ -575,5 +931,7 @@ export const useAuth = () => {
     updateUser,
     addDonation,
     getDonations,
+    getDonationStats, // Add stats function
+    validateAuth, // Expose validation helper
   };
 };
