@@ -1,4 +1,3 @@
-
 // import axios from 'axios';
 // import { API_BASE_URL } from '../config/apiConfig';
 // import { jwtUtils } from '../utils/jwtUtils';
@@ -102,45 +101,80 @@
 // };
 
 // // ------------------------
-// // Helper: Date formatting function
+// // FIXED: Date formatting function for exact backend format
 // // ------------------------
 // const formatDateForBackend = (dateString: string): string => {
 //   try {
-//     // If dateString is already in ISO format with time, return as is
-//     if (dateString.includes('T')) {
+//     console.log('API: Formatting date:', dateString);
+    
+//     // If dateString is already in the correct format, return as is
+//     if (dateString.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/)) {
+//       console.log('API: Date already in correct format:', dateString);
 //       return dateString;
 //     }
     
-//     // Parse the date string (assuming YYYY-MM-DD format from frontend)
-//     const date = new Date(dateString + 'T00:00:00.000Z');
+//     // If it's just a date (YYYY-MM-DD), add the time part
+//     if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+//       const formattedDate = dateString + 'T00:00:00';
+//       console.log('API: Added time to date:', formattedDate);
+//       return formattedDate;
+//     }
     
-//     // Check if date is valid
+//     // If it's a full ISO string, convert to our format
+//     const date = new Date(dateString);
 //     if (isNaN(date.getTime())) {
 //       throw new Error('Invalid date');
 //     }
     
-//     // Return ISO string format that backend expects
-//     return date.toISOString();
+//     // Format as YYYY-MM-DDTHH:mm:ss (exactly as backend expects)
+//     const year = date.getFullYear();
+//     const month = String(date.getMonth() + 1).padStart(2, '0');
+//     const day = String(date.getDate()).padStart(2, '0');
+    
+//     const formattedDate = `${year}-${month}-${day}T00:00:00`;
+//     console.log('API: Converted date to backend format:', formattedDate);
+//     return formattedDate;
+    
 //   } catch (error) {
-//     console.error('Date formatting error:', error);
-//     throw new Error('Invalid date format');
+//     console.error('API: Date formatting error:', error);
+//     throw new Error(`Invalid date format: ${dateString}`);
 //   }
 // };
 
 // // ------------------------
-// // Helper: Date parsing from backend
+// // Helper: Date parsing from backend for frontend display
 // // ------------------------
 // const parseDateFromBackend = (dateString: string): string => {
 //   try {
-//     const date = new Date(dateString);
-//     if (isNaN(date.getTime())) {
-//       return dateString; // Return original if parsing fails
+//     if (!dateString) return dateString;
+    
+//     console.log('API: Parsing backend date:', dateString);
+    
+//     // If it's in our expected format (YYYY-MM-DDTHH:mm:ss), extract date part
+//     if (dateString.match(/^\d{4}-\d{2}-\d{2}T/)) {
+//       const datePart = dateString.split('T')[0];
+//       console.log('API: Extracted date part:', datePart);
+//       return datePart;
 //     }
     
-//     // Return YYYY-MM-DD format for frontend display
-//     return date.toISOString().split('T')[0];
+//     // Otherwise try to parse as Date and format
+//     const date = new Date(dateString);
+//     if (isNaN(date.getTime())) {
+//       console.warn('API: Could not parse date, returning original:', dateString);
+//       return dateString;
+//     }
+    
+//     // Return YYYY-MM-DD format for frontend
+//     const year = date.getFullYear();
+//     const month = String(date.getMonth() + 1).padStart(2, '0');
+//     const day = String(date.getDate()).padStart(2, '0');
+    
+//     const formattedDate = `${year}-${month}-${day}`;
+//     console.log('API: Parsed date for frontend:', formattedDate);
+//     return formattedDate;
+    
 //   } catch (error) {
-//     console.error('Date parsing error:', error);
+//     console.error('API: Date parsing error:', error);
 //     return dateString; // Return original if parsing fails
 //   }
 // };
@@ -236,7 +270,7 @@
 //     console.log('API: User logged out, token removed');
 //   },
 
-//   // FIXED: Enhanced Donations with proper date formatting
+//   // FIXED: Enhanced Donations with exact backend date format
 //   addDonation: async (donationData: {
 //     donationDate: string;
 //     location: string;
@@ -244,7 +278,7 @@
 //     recipientContact?: string;
 //   }) => {
 //     try {
-//       console.log('API: Adding donation record:', donationData);
+//       console.log('API: Adding donation record - Raw input:', donationData);
       
 //       // Auto-detect donor ID from token
 //       const donorId = apiService.getCurrentUserId();
@@ -272,47 +306,51 @@
 //         throw new Error(error);
 //       }
 
-//       // FIXED: Format date properly for backend
+//       // FIXED: Format date in exact backend format (YYYY-MM-DDTHH:mm:ss)
 //       const formattedDate = formatDateForBackend(donationData.donationDate);
-//       console.log('API: Formatted donation date:', formattedDate);
+//       console.log('API: Date formatted for backend:', formattedDate);
 
-//       // FIXED: Prepare request payload - match your backend JSON format exactly
+//       // FIXED: Prepare exact payload format that backend expects
 //       const payload = {
-//         donationDate: formattedDate, // Send properly formatted date
+//         donationDate: formattedDate, // Exact format: "2025-07-28T00:00:00"
 //         location: donationData.location.trim(),
 //         recipientContact: donationData.recipientContact?.trim() || '',
 //         notes: donationData.notes?.trim() || '',
 //         donor: { 
-//           id: donorId
+//           id: donorId  // Backend expects { id: number }
 //         }
 //       };
 
-//       console.log('API: Sending payload to backend:', payload);
+//       console.log('API: Final payload for backend:', JSON.stringify(payload, null, 2));
 //       console.log('API: Making POST request to /donations');
 
 //       const response = await api.post('/donations', payload);
 
-//       console.log('API: Donation added successfully:', response);
+//       console.log('API: Donation added successfully:', response.data);
 //       return response.data || { success: true };
+      
 //     } catch (error: any) {
 //       console.error('API: Failed to add donation:', error);
-//       console.error('API: Error response:', error.response?.data);
+//       console.error('API: Error response data:', error.response?.data);
 //       console.error('API: Error status:', error.response?.status);
+//       console.error('API: Full error response:', error.response);
       
 //       // Enhanced error handling
 //       if (error.response?.data?.message) {
 //         throw new Error(error.response.data.message);
-//       } else if (error.response?.data) {
-//         throw new Error(JSON.stringify(error.response.data));
+//       } else if (error.response?.data?.error) {
+//         throw new Error(error.response.data.error);
+//       } else if (error.response?.data && typeof error.response.data === 'string') {
+//         throw new Error(error.response.data);
 //       } else if (error.message) {
 //         throw new Error(error.message);
 //       } else {
-//         throw new Error('Failed to add donation record');
+//         throw new Error('Failed to add donation record. Please try again.');
 //       }
 //     }
 //   },
 
-//   // FIXED: Auto-detect user ID if not provided and parse dates properly
+//   // FIXED: Get donations with proper date parsing
 //   getDonations: async (donorId?: number) => {
 //     try {
 //       // Auto-detect donor ID from token if not provided
@@ -336,25 +374,30 @@
 
 //       console.log('API: Making GET request to:', `/donations/${targetDonorId}`);
 //       const response = await api.get(`/donations/${targetDonorId}`);
-//       console.log('API: Donations fetched successfully:', response.data);
+//       console.log('API: Raw donations from backend:', response.data);
       
 //       // FIXED: Parse dates properly for frontend
-//       const donations = (response.data || []).map((donation: any) => ({
-//         ...donation,
-//         // Parse backend date to frontend format (YYYY-MM-DD)
-//         donationDate: donation.donationDate ? parseDateFromBackend(donation.donationDate) : donation.donationDate,
-//         // Keep original timestamp for other uses
-//         donationTimestamp: donation.donationDate,
-//         // Ensure proper ID formatting
-//         id: donation.id?.toString() || Math.random().toString(),
-//         donor: {
-//           ...donation.donor,
-//           id: donation.donor?.id?.toString() || targetDonorId.toString()
-//         }
-//       }));
+//       const donations = (response.data || []).map((donation: any) => {
+//         const processedDonation = {
+//           ...donation,
+//           // Parse backend date format for frontend display
+//           donationDate: donation.donationDate ? parseDateFromBackend(donation.donationDate) : donation.donationDate,
+//           // Keep original timestamp for sorting and other operations
+//           donationTimestamp: donation.donationDate,
+//           // Ensure proper ID formatting
+//           id: donation.id?.toString() || Math.random().toString(),
+//           donor: {
+//             ...donation.donor,
+//             id: donation.donor?.id?.toString() || targetDonorId.toString()
+//           }
+//         };
+//         console.log('API: Processed donation:', processedDonation);
+//         return processedDonation;
+//       });
       
-//       console.log('API: Processed donations with formatted dates:', donations);
+//       console.log('API: Final processed donations:', donations);
 //       return donations;
+      
 //     } catch (error: any) {
 //       console.error('API: Failed to fetch donations:', error);
 //       console.error('API: Error response:', error.response?.data);
@@ -515,8 +558,17 @@ import { jwtUtils } from '../utils/jwtUtils';
 // Interfaces
 // ------------------------
 interface User {
+  id?: string;
+  name?: string;
   email: string;
   password: string;
+  role?: string;
+  bloodGroup?: string;
+  city?: string;
+  state?: string;
+  isActive?: boolean;
+  isVerified?: boolean;
+  registrationDate?: string;
 }
 
 interface DonationRecord {
@@ -544,7 +596,7 @@ const api = axios.create({
     'Accept': 'application/json',
   },
   withCredentials: true,
-  timeout: 10000, // 10 second timeout
+  timeout: 10000,
 });
 
 // ------------------------
@@ -557,7 +609,6 @@ api.interceptors.request.use((config) => {
   
   const token = localStorage.getItem("token");
   if (token) {
-    // Check if token is expired before making request
     if (jwtUtils.isTokenExpired()) {
       console.warn('Token expired, removing from storage');
       localStorage.removeItem('token');
@@ -585,7 +636,6 @@ api.interceptors.response.use(
     console.error('API Error Response:', error.response?.data);
     console.error('API Error Status:', error.response?.status);
     
-    // Handle token expiration
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       console.warn('Authentication failed, token removed');
@@ -610,32 +660,28 @@ const bloodGroupMap: Record<string, string> = {
 };
 
 // ------------------------
-// FIXED: Date formatting function for exact backend format
+// Date formatting function for backend
 // ------------------------
 const formatDateForBackend = (dateString: string): string => {
   try {
     console.log('API: Formatting date:', dateString);
     
-    // If dateString is already in the correct format, return as is
     if (dateString.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/)) {
       console.log('API: Date already in correct format:', dateString);
       return dateString;
     }
     
-    // If it's just a date (YYYY-MM-DD), add the time part
     if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
       const formattedDate = dateString + 'T00:00:00';
       console.log('API: Added time to date:', formattedDate);
       return formattedDate;
     }
     
-    // If it's a full ISO string, convert to our format
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
       throw new Error('Invalid date');
     }
     
-    // Format as YYYY-MM-DDTHH:mm:ss (exactly as backend expects)
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -643,7 +689,6 @@ const formatDateForBackend = (dateString: string): string => {
     const formattedDate = `${year}-${month}-${day}T00:00:00`;
     console.log('API: Converted date to backend format:', formattedDate);
     return formattedDate;
-    
   } catch (error) {
     console.error('API: Date formatting error:', error);
     throw new Error(`Invalid date format: ${dateString}`);
@@ -651,7 +696,7 @@ const formatDateForBackend = (dateString: string): string => {
 };
 
 // ------------------------
-// Helper: Date parsing from backend for frontend display
+// Date parsing from backend
 // ------------------------
 const parseDateFromBackend = (dateString: string): string => {
   try {
@@ -659,21 +704,18 @@ const parseDateFromBackend = (dateString: string): string => {
     
     console.log('API: Parsing backend date:', dateString);
     
-    // If it's in our expected format (YYYY-MM-DDTHH:mm:ss), extract date part
     if (dateString.match(/^\d{4}-\d{2}-\d{2}T/)) {
       const datePart = dateString.split('T')[0];
       console.log('API: Extracted date part:', datePart);
       return datePart;
     }
     
-    // Otherwise try to parse as Date and format
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
       console.warn('API: Could not parse date, returning original:', dateString);
       return dateString;
     }
     
-    // Return YYYY-MM-DD format for frontend
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -681,10 +723,9 @@ const parseDateFromBackend = (dateString: string): string => {
     const formattedDate = `${year}-${month}-${day}`;
     console.log('API: Parsed date for frontend:', formattedDate);
     return formattedDate;
-    
   } catch (error) {
     console.error('API: Date parsing error:', error);
-    return dateString; // Return original if parsing fails
+    return dateString;
   }
 };
 
@@ -692,24 +733,20 @@ const parseDateFromBackend = (dateString: string): string => {
 // API Service
 // ------------------------
 export const apiService = {
-  // Get current user info from token
   getCurrentUser: () => {
     return jwtUtils.getTokenInfo();
   },
 
-  // Get current user ID
   getCurrentUserId: (): number | null => {
     const userId = jwtUtils.getUserId();
     return userId ? parseInt(userId, 10) : null;
   },
 
-  // Check authentication status
   isAuthenticated: (): boolean => {
     const token = localStorage.getItem('token');
     return token !== null && !jwtUtils.isTokenExpired();
   },
 
-  // Auth
   register: async (userData: any) => {
     try {
       console.log('API: Sending registration data:', userData);
@@ -760,7 +797,6 @@ export const apiService = {
         localStorage.setItem('token', token);
         console.log('API: Token saved successfully');
         
-        // Log decoded token info for debugging
         const tokenInfo = jwtUtils.getTokenInfo();
         console.log('API: Decoded token info:', tokenInfo);
       } else {
@@ -779,7 +815,6 @@ export const apiService = {
     console.log('API: User logged out, token removed');
   },
 
-  // FIXED: Enhanced Donations with exact backend date format
   addDonation: async (donationData: {
     donationDate: string;
     location: string;
@@ -789,14 +824,12 @@ export const apiService = {
     try {
       console.log('API: Adding donation record - Raw input:', donationData);
       
-      // Auto-detect donor ID from token
       const donorId = apiService.getCurrentUserId();
       if (!donorId) {
         throw new Error('Unable to determine donor ID. Please login again.');
       }
       console.log('API: Auto-detected donor ID from token:', donorId);
 
-      // Enhanced validation
       if (typeof donorId !== 'number' || donorId <= 0) {
         const error = `Invalid donor ID: ${donorId}`;
         console.error('API:', error);
@@ -815,19 +848,15 @@ export const apiService = {
         throw new Error(error);
       }
 
-      // FIXED: Format date in exact backend format (YYYY-MM-DDTHH:mm:ss)
       const formattedDate = formatDateForBackend(donationData.donationDate);
       console.log('API: Date formatted for backend:', formattedDate);
 
-      // FIXED: Prepare exact payload format that backend expects
       const payload = {
-        donationDate: formattedDate, // Exact format: "2025-07-28T00:00:00"
+        donationDate: formattedDate,
         location: donationData.location.trim(),
         recipientContact: donationData.recipientContact?.trim() || '',
         notes: donationData.notes?.trim() || '',
-        donor: { 
-          id: donorId  // Backend expects { id: number }
-        }
+        donor: { id: donorId }
       };
 
       console.log('API: Final payload for backend:', JSON.stringify(payload, null, 2));
@@ -837,14 +866,12 @@ export const apiService = {
 
       console.log('API: Donation added successfully:', response.data);
       return response.data || { success: true };
-      
     } catch (error: any) {
       console.error('API: Failed to add donation:', error);
       console.error('API: Error response data:', error.response?.data);
       console.error('API: Error status:', error.response?.status);
       console.error('API: Full error response:', error.response);
       
-      // Enhanced error handling
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       } else if (error.response?.data?.error) {
@@ -859,10 +886,8 @@ export const apiService = {
     }
   },
 
-  // FIXED: Get donations with proper date parsing
   getDonations: async (donorId?: number) => {
     try {
-      // Auto-detect donor ID from token if not provided
       let targetDonorId = donorId;
       if (!targetDonorId) {
         targetDonorId = apiService.getCurrentUserId();
@@ -874,7 +899,6 @@ export const apiService = {
 
       console.log('API: Fetching donations for donor:', targetDonorId);
       
-      // Enhanced validation
       if (!targetDonorId || typeof targetDonorId !== 'number' || targetDonorId <= 0) {
         const error = `Invalid donor ID: ${targetDonorId}`;
         console.error('API:', error);
@@ -885,15 +909,11 @@ export const apiService = {
       const response = await api.get(`/donations/${targetDonorId}`);
       console.log('API: Raw donations from backend:', response.data);
       
-      // FIXED: Parse dates properly for frontend
       const donations = (response.data || []).map((donation: any) => {
         const processedDonation = {
           ...donation,
-          // Parse backend date format for frontend display
           donationDate: donation.donationDate ? parseDateFromBackend(donation.donationDate) : donation.donationDate,
-          // Keep original timestamp for sorting and other operations
           donationTimestamp: donation.donationDate,
-          // Ensure proper ID formatting
           id: donation.id?.toString() || Math.random().toString(),
           donor: {
             ...donation.donor,
@@ -906,16 +926,14 @@ export const apiService = {
       
       console.log('API: Final processed donations:', donations);
       return donations;
-      
     } catch (error: any) {
       console.error('API: Failed to fetch donations:', error);
       console.error('API: Error response:', error.response?.data);
       console.error('API: Error status:', error.response?.status);
       
-      // Handle specific error cases
       if (error.response?.status === 404) {
         console.log('API: No donations found for donor, returning empty array');
-        return []; // Return empty array instead of throwing error
+        return [];
       } else if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       } else if (error.message) {
@@ -926,7 +944,6 @@ export const apiService = {
     }
   },
 
-  // Get donation statistics with auto-detection and proper date handling
   getDonationStats: async (donorId?: number) => {
     try {
       const targetDonorId = donorId || apiService.getCurrentUserId();
@@ -942,7 +959,6 @@ export const apiService = {
         totalDonations: donations.length,
         lastDonationDate: donations.length > 0 
           ? donations.sort((a: any, b: any) => {
-              // Use donationTimestamp for sorting if available, otherwise donationDate
               const dateA = new Date(a.donationTimestamp || a.donationDate);
               const dateB = new Date(b.donationTimestamp || b.donationDate);
               return dateB.getTime() - dateA.getTime();
@@ -962,7 +978,6 @@ export const apiService = {
     }
   },
 
-  // Users
   updateUser: async (id: number, user: User) => {
     try {
       console.log('API: Updating user:', id, user);
@@ -987,7 +1002,6 @@ export const apiService = {
     }
   },
 
-  // Get current user profile
   getCurrentUserProfile: async () => {
     try {
       const userId = apiService.getCurrentUserId();
@@ -1002,13 +1016,16 @@ export const apiService = {
     }
   },
 
-  // Admin
   getAllUsers: async () => {
     try {
       console.log('API: Fetching all users');
       const response = await api.get('/admin/users');
-      console.log('API: All users fetched successfully');
-      return response.data;
+      console.log('API: All users fetched successfully:', response.data);
+      return response.data.map((user: any) => ({
+        ...user,
+        id: user.id.toString(),
+        registrationDate: parseDateFromBackend(user.registrationDate)
+      }));
     } catch (error: any) {
       console.error('API: Failed to fetch all users:', error);
       throw error;
@@ -1039,12 +1056,10 @@ export const apiService = {
     }
   },
 
-  // Search
   searchDonors: async (params: SearchParams) => {
     try {
       console.log('API: Searching donors with params:', params);
       
-      // Transform blood group to backend format if needed
       const searchParams = {
         ...params,
         bloodGroup: params.bloodGroup ? bloodGroupMap[params.bloodGroup] || params.bloodGroup : undefined

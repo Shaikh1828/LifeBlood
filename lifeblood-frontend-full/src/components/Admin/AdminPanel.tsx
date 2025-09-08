@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Shield, Ban, Check, X, Search, Filter } from 'lucide-react';
 import { User } from '../../types';
-import { storageUtils } from '../../utils/storage';
+import { apiService } from '../../services/apiService';
 import { dateUtils } from '../../utils/dateUtils';
 
 interface AdminPanelProps {
@@ -14,6 +14,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'donor' | 'recipient'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'unverified'>('all');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -23,9 +25,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentUser }) => {
     filterUsers();
   }, [users, searchTerm, filterRole, filterStatus]);
 
-  const loadUsers = () => {
-    const allUsers = storageUtils.getUsers().filter(user => user.id !== currentUser.id);
-    setUsers(allUsers);
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const allUsers = await apiService.getAllUsers();
+      // Filter out current admin user
+      const filteredUsers = allUsers.filter((user: User) => user.id !== currentUser.id);
+      setUsers(filteredUsers);
+    } catch (err: any) {
+      console.error('Failed to load users:', err);
+      setError('Failed to load users. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filterUsers = () => {
@@ -57,28 +70,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentUser }) => {
     setFilteredUsers(filtered);
   };
 
-  const handleVerifyUser = (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    if (user) {
-      const updatedUser = { ...user, isVerified: true };
-      storageUtils.saveUser(updatedUser);
-      loadUsers();
+  const handleVerifyUser = async (userId: string) => {
+    try {
+      setError(null);
+      await apiService.verifyUser(parseInt(userId));
+      await loadUsers();
+    } catch (err: any) {
+      console.error('Failed to verify user:', err);
+      setError('Failed to verify user. Please try again.');
     }
   };
 
-  const handleToggleUserStatus = (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    if (user) {
-      const updatedUser = { ...user, isActive: !user.isActive };
-      storageUtils.saveUser(updatedUser);
-      loadUsers();
-    }
-  };
-
-  const handleDeleteUser = (userId: string) => {
-    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      storageUtils.deleteUser(userId);
-      loadUsers();
+  const handleToggleUserStatus = async (userId: string) => {
+    try {
+      setError(null);
+      await apiService.disableUser(parseInt(userId));
+      await loadUsers();
+    } catch (err: any) {
+      console.error('Failed to toggle user status:', err);
+      setError('Failed to toggle user status. Please try again.');
     }
   };
 
@@ -101,6 +111,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentUser }) => {
     recipients: users.filter(u => u.role === 'recipient').length
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading users...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
@@ -108,6 +129,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentUser }) => {
         <p className="mt-2 text-lg text-gray-600">
           Manage users and oversee the LifeBlood platform
         </p>
+        {error && (
+          <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -329,13 +355,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentUser }) => {
                       title={user.isActive ? 'Deactivate user' : 'Activate user'}
                     >
                       {user.isActive ? <Ban className="h-4 w-4" /> : <Check className="h-4 w-4" />}
-                    </button>
-                    <button
-                      onClick={() => handleDeleteUser(user.id)}
-                      className="text-red-600 hover:text-red-900"
-                      title="Delete user"
-                    >
-                      <X className="h-4 w-4" />
                     </button>
                   </td>
                 </tr>
