@@ -648,7 +648,7 @@ api.interceptors.response.use(
 // ------------------------
 // Helper: bloodGroup mapping
 // ------------------------
-const bloodGroupMap: Record<string, string> = {
+const bloodGroupToEnumMap: Record<string, string> = {
   "A+": "A_PLUS",
   "A-": "A_NEG",
   "B+": "B_PLUS",
@@ -657,6 +657,16 @@ const bloodGroupMap: Record<string, string> = {
   "AB-": "AB_NEG",
   "O+": "O_PLUS",
   "O-": "O_NEG",
+};
+const bloodGroupFromEnumMap: Record<string, string> = {
+  "A_PLUS": "A+",
+  "A_NEG": "A-",
+  "B_PLUS": "B+", 
+  "B_NEG": "B-",
+  "AB_PLUS": "AB+",
+  "AB_NEG": "AB-",
+  "O_PLUS": "O+",
+  "O_NEG": "O-",
 };
 
 // ------------------------
@@ -760,7 +770,7 @@ export const apiService = {
         district: userData.district,
         upazila: userData.upazila,
         address: userData.address || '',
-        bloodGroup: bloodGroupMap[userData.bloodGroup] || userData.bloodGroup,
+         bloodGroup: bloodGroupToEnumMap[userData.bloodGroup] || userData.bloodGroup,
       });
 
       console.log('API: Registration response:', response);
@@ -1061,15 +1071,42 @@ export const apiService = {
       console.log('API: Searching donors with params:', params);
       
       const searchParams = {
-        ...params,
-        bloodGroup: params.bloodGroup ? bloodGroupMap[params.bloodGroup] || params.bloodGroup : undefined
+       bloodGroup: params.bloodGroup, // Send display format directly (O-, A+)
+        division: params.division,
+        district: params.district,
+        upazila: params.upazila
       };
       
-      const response = await api.get('/search', { params: searchParams });
-      console.log('API: Donor search completed successfully');
-      return response.data;
+       const cleanParams = Object.fromEntries(
+        Object.entries(searchParams).filter(([_, v]) => v !== undefined && v !== '')
+      );
+      
+      console.log('API: Cleaned search params for backend:', cleanParams);
+      console.log('API: Making GET request to /search with params:', cleanParams);
+      
+      const response = await api.get('/search', { params: cleanParams });
+      console.log('API: Search response received:', response.data);
+      
+      // Transform backend response - convert blood groups from enum to display format
+      const transformedResults = (response.data || []).map((donor: any) => ({
+        ...donor,
+        // Convert enum format (O_NEG, A_PLUS) back to display format (O-, A+) 
+        bloodGroup: bloodGroupFromEnumMap[donor.bloodGroup] || donor.bloodGroup
+      }));
+      
+      console.log('API: Donor search completed successfully, transformed results:', transformedResults);
+      return transformedResults;
     } catch (error: any) {
       console.error('API: Failed to search donors:', error);
+      console.error('API: Search error response:', error.response?.data);
+      console.error('API: Search error status:', error.response?.status);
+      
+      // Enhanced error handling for search
+      if (error.response?.status === 404) {
+        console.log('API: No donors found, returning empty array');
+        return []; // Return empty array for 404 instead of throwing
+      }
+      
       throw error;
     }
   },
