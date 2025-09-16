@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Users, Shield, Ban, Check, X, Search, Filter } from 'lucide-react';
 import { User } from '../../types';
 import { apiService } from '../../services/apiService';
-import { dateUtils } from '../../utils/dateUtils';
 
 interface AdminPanelProps {
   currentUser: User;
@@ -44,12 +43,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentUser }) => {
   const filterUsers = () => {
     let filtered = users;
 
-    // Search filter
+    // Search filter - Updated to include division, district, upazila
     if (searchTerm) {
       filtered = filtered.filter(user =>
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.city.toLowerCase().includes(searchTerm.toLowerCase())
+        (user.division && user.division.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (user.district && user.district.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (user.upazila && user.upazila.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (user.address && user.address.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -100,6 +102,40 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentUser }) => {
       return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Unverified</span>;
     }
     return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>;
+  };
+
+  // Format date for createdAt field from your database
+  const formatRegistrationDate = (dateString: string) => {
+    if (!dateString) return 'Invalid Date';
+    
+    try {
+      // Handle format like '2025-07-28T10:32:51Z[UTC]'
+      const cleanDateString = dateString.replace(/\[UTC\]$/, '');
+      const date = new Date(cleanDateString);
+      
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  };
+
+  // Format location based on your database structure
+  const formatLocation = (user: User) => {
+    const locationParts = [];
+    
+    if (user.upazila) locationParts.push(user.upazila);
+    if (user.district) locationParts.push(user.district);
+    if (user.division) locationParts.push(user.division);
+    
+    return locationParts.length > 0 ? locationParts.join(', ') : 'Location not specified';
   };
 
   const stats = {
@@ -233,7 +269,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentUser }) => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                placeholder="Search by name, email, or city"
+                placeholder="Search by name, email, or location"
               />
             </div>
           </div>
@@ -331,13 +367,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentUser }) => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.city}, {user.state}
+                    {formatLocation(user)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(user)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {dateUtils.formatDate(user.registrationDate)}
+                    {formatRegistrationDate(user.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     {!user.isVerified && (
