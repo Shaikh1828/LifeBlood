@@ -112,14 +112,21 @@ public class UserController {
 
             // Handle password update if provided
             // শুধু নতুন plain text পাসওয়ার্ড এলে হ্যাশ করুন
+//            if (updatedUser.getPasswordHash() != null && !updatedUser.getPasswordHash().trim().isEmpty()) {
+//                if (!updatedUser.getPasswordHash().equals(existingUser.getPasswordHash())) {
+//                    // শুধুমাত্র নতুন plain password হলে hash করুন
+//                    String hashedPassword = PasswordUtil.hashPassword(updatedUser.getPasswordHash());
+//                    existingUser.setPasswordHash(hashedPassword);
+//                }
+//            }
+            // Handle password update if provided
             if (updatedUser.getPasswordHash() != null && !updatedUser.getPasswordHash().trim().isEmpty()) {
-                if (!updatedUser.getPasswordHash().equals(existingUser.getPasswordHash())) {
-                    // শুধুমাত্র নতুন plain password হলে hash করুন
-                    String hashedPassword = PasswordUtil.hashPassword(updatedUser.getPasswordHash());
-                    existingUser.setPasswordHash(hashedPassword);
-                }
+                // Since frontend sends plain text in passwordHash field, always hash it
+                // (similar to registration logic)
+                String hashedPassword = PasswordUtil.hashPassword(updatedUser.getPasswordHash().trim());
+                existingUser.setPasswordHash(hashedPassword);
+                logger.info("Password updated for user ID: " + id);
             }
-
 
             // Update user in database
             userService.updateProfile(existingUser);
