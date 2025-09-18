@@ -37,7 +37,7 @@ public class User {
     private boolean isActive = true;
 
     @Column(name = "is_verified")
-    private boolean isVerified = false;
+    private boolean isVerified = true;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "last_donation_date")

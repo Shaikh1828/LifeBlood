@@ -35,4 +35,11 @@ public class AdminController {
     public void disableUser(@PathParam("id") Long id) {
         adminService.disableUser(id);
     }
+
+    @PUT
+    @Path("/reactive/{id}")
+    @Secured
+    public void reactiveUser(@PathParam("id") Long id) {
+        adminService.reactiveUser(id);
+    }
 }

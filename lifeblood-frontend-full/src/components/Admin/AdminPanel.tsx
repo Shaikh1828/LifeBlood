@@ -83,10 +83,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentUser }) => {
     }
   };
 
-  const handleToggleUserStatus = async (userId: string) => {
+  const handleToggleUserStatus = async (userId: string, isCurrentlyActive: boolean) => {
     try {
       setError(null);
-      await apiService.disableUser(parseInt(userId));
+      if (isCurrentlyActive) {
+        await apiService.disableUser(parseInt(userId));
+      } else {
+        await apiService.reactiveUser(parseInt(userId));
+      }
       await loadUsers();
     } catch (err: any) {
       console.error('Failed to toggle user status:', err);
@@ -386,9 +390,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ currentUser }) => {
                       </button>
                     )}
                     <button
-                      onClick={() => handleToggleUserStatus(user.id)}
+                      onClick={() => handleToggleUserStatus(user.id, user.isActive)}
                       className={`${user.isActive ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}`}
-                      title={user.isActive ? 'Deactivate user' : 'Activate user'}
+                      title={user.isActive ? 'Deactivate user' : 'Reactivate user'}
                     >
                       {user.isActive ? <Ban className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                     </button>

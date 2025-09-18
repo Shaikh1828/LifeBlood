@@ -32,5 +32,13 @@ public class AdminService {
             userRepo.update(user);
         }
     }
+
+    public void reactiveUser(Long id) {
+        User user = userRepo.findById(id);
+        if (user != null) {
+            user.setIsActive(true);
+            userRepo.update(user);
+        }
+    }
     
 }
