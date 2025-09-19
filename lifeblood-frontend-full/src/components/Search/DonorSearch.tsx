@@ -3,7 +3,6 @@ import { Search, MapPin, Phone, Clock, Droplet, Filter } from 'lucide-react';
 import { BloodGroup, User } from '../../types';
 import { apiService } from '../../services/apiService';
 
-
 interface DonorSearchProps {
   currentUser: User | null;
 }
@@ -30,6 +29,90 @@ interface DonorResult {
   isVerified: boolean;
 }
 
+// Bangladesh Divisions, Districts and Upazilas Data
+const divisionsDistrictsUpazilas = {
+  "Dhaka": {
+    "Dhaka": ["Dhanmondi", "Wari", "Tejgaon", "Ramna", "Motijheel", "Kotwali", "Lalbagh", "Sutrapur", "Hazaribagh", "New Market", "Shahbagh", "Paltan", "Gulshan", "Cantonment", "Uttara", "Pallabi", "Mirpur", "Mohammadpur", "Adabor", "Kafrul", "Tejgaon I.A.", "Badda", "Vatara", "Khilkhet", "Shah Ali"],
+    "Faridpur": ["Faridpur Sadar", "Alfadanga", "Boalmari", "Charbhadrasan", "Madhukhali", "Nagarkanda", "Sadarpur", "Saltha", "Bhanga"],
+    "Gazipur": ["Gazipur Sadar", "Kaliakair", "Kapasia", "Sreepur", "Kaliganj", "Tongi"],
+    "Gopalganj": ["Gopalganj Sadar", "Kashiani", "Kotalipara", "Muksudpur", "Tungipara"],
+    "Kishoreganj": ["Kishoreganj Sadar", "Austagram", "Bajitpur", "Bhairab", "Hossainpur", "Itna", "Karimganj", "Katiadi", "Kuliarchar", "Mithamain", "Nikli", "Pakundia", "Tarail"],
+    "Madaripur": ["Madaripur Sadar", "Kalkini", "Rajoir", "Shibchar"],
+    "Manikganj": ["Manikganj Sadar", "Daulatpur", "Ghior", "Harirampur", "Saturia", "Shivalaya", "Singair"],
+    "Munshiganj": ["Munshiganj Sadar", "Gazaria", "Lohajang", "Sirajdikhan", "Sreenagar", "Tongibari"],
+    "Narayanganj": ["Narayanganj Sadar", "Araihazar", "Bandar", "Rupganj", "Sonargaon"],
+    "Narsingdi": ["Narsingdi Sadar", "Belabo", "Monohardi", "Palash", "Raipura", "Shibpur"],
+    "Rajbari": ["Rajbari Sadar", "Baliakandi", "Goalandaghat", "Pangsha", "Kalukhali"],
+    "Shariatpur": ["Shariatpur Sadar", "Bhedarganj", "Damudya", "Gosairhat", "Naria", "Zajira"],
+    "Tangail": ["Tangail Sadar", "Basail", "Bhuapur", "Delduar", "Ghatail", "Gopalpur", "Kalihati", "Madhupur", "Mirzapur", "Nagarpur", "Sakhipur", "Dhanbari"]
+  },
+  "Chittagong": {
+    "Bandarban": ["Bandarban Sadar", "Alikadam", "Lama", "Naikhongchhari", "Rowangchhari", "Ruma", "Thanchi"],
+    "Brahmanbaria": ["Brahmanbaria Sadar", "Akhaura", "Ashuganj", "Bijoynagar", "Kasba", "Nabinagar", "Nasirnagar", "Sarail", "Bancharampur"],
+    "Chandpur": ["Chandpur Sadar", "Faridganj", "Haimchar", "Haziganj", "Kachua", "Matlab Dakshin", "Matlab Uttar", "Shahrasti"],
+    "Chittagong": ["Chittagong Sadar", "Anwara", "Banshkhali", "Boalkhali", "Chandanaish", "Fatikchhari", "Hathazari", "Lohagara", "Mirsharai", "Patiya", "Rangunia", "Raozan", "Sandwip", "Satkania", "Sitakunda", "Kotwali", "Panchlaish", "Double Mooring", "Chandgaon", "Pahartali", "Bakalia", "Bayazid", "EPZ", "Halishahar", "Khulshi", "Patenga", "Karnaphuli"],
+    "Comilla": ["Comilla Sadar", "Barura", "Brahmanpara", "Burichang", "Chandina", "Chauddagram", "Daudkandi", "Debidwar", "Homna", "Laksam", "Muradnagar", "Nangalkot", "Comilla Sadar Dakshin", "Meghna", "Monohorgonj", "Sadarsouth", "Titas"],
+    "Cox's Bazar": ["Cox's Bazar Sadar", "Chakaria", "Kutubdia", "Maheshkhali", "Ramu", "Teknaf", "Ukhia", "Pekua"],
+    "Feni": ["Feni Sadar", "Chhagalnaiya", "Daganbhuiyan", "Fulgazi", "Parshuram", "Sonagazi"],
+    "Khagrachhari": ["Khagrachhari Sadar", "Dighinala", "Lakshmichhari", "Mahalchhari", "Manikchhari", "Matiranga", "Panchhari", "Ramgarh"],
+    "Lakshmipur": ["Lakshmipur Sadar", "Kamalnagar", "Raipur", "Ramganj", "Ramgati"],
+    "Noakhali": ["Noakhali Sadar", "Begumganj", "Chatkhil", "Companiganj", "Hatiya", "Kabirhat", "Senbagh", "Sonaimuri", "Subarna Char"],
+    "Rangamati": ["Rangamati Sadar", "Baghaichhari", "Barkal", "Belaichhari", "Kaptai", "Juraichhari", "Langadu", "Naniarchar", "Rajasthali", "Kaukhali"]
+  },
+  "Rajshahi": {
+    "Bogura": ["Bogura Sadar", "Adamdighi", "Dhunat", "Dhupchanchia", "Gabtali", "Kahaloo", "Nandigram", "Sariakandi", "Shajahanpur", "Sherpur", "Shibganj", "Sonatala"],
+    "Joypurhat": ["Joypurhat Sadar", "Akkelpur", "Kalai", "Khetlal", "Panchbibi"],
+    "Naogaon": ["Naogaon Sadar", "Atrai", "Badalgachhi", "Dhamoirhat", "Manda", "Mahadebpur", "Niamatpur", "Patnitala", "Porsha", "Raninagar", "Sapahar"],
+    "Natore": ["Natore Sadar", "Bagatipara", "Baraigram", "Gurudaspur", "Lalpur", "Naldanga", "Singra"],
+    "Nawabganj": ["Nawabganj Sadar", "Bholahat", "Gomastapur", "Nachole", "Shibganj"],
+    "Pabna": ["Pabna Sadar", "Atgharia", "Bera", "Bhangura", "Chatmohar", "Faridpur", "Ishwardi", "Santhia", "Sujanagar"],
+    "Rajshahi": ["Rajshahi Sadar", "Bagha", "Bagmara", "Charghat", "Durgapur", "Godagari", "Mohanpur", "Paba", "Puthia", "Tanore"],
+    "Sirajganj": ["Sirajganj Sadar", "Belkuchi", "Chauhali", "Kamarkhand", "Kazipur", "Raiganj", "Shahjadpur", "Tarash", "Ullahpara"]
+  },
+  "Rangpur": {
+    "Dinajpur": ["Dinajpur Sadar", "Birampur", "Birganj", "Biral", "Bochaganj", "Chirirbandar", "Phulbari", "Ghoraghat", "Hakimpur", "Kaharole", "Khansama", "Nawabganj", "Parbatipur"],
+    "Gaibandha": ["Gaibandha Sadar", "Fulchhari", "Gobindaganj", "Palashbari", "Sadullapur", "Saghata", "Sundarganj"],
+    "Kurigram": ["Kurigram Sadar", "Bhurungamari", "Char Rajibpur", "Chilmari", "Phulbari", "Nageshwari", "Rajarhat", "Raomari", "Ulipur"],
+    "Lalmonirhat": ["Lalmonirhat Sadar", "Aditmari", "Hatibandha", "Kaliganj", "Patgram"],
+    "Nilphamari": ["Nilphamari Sadar", "Dimla", "Domar", "Jaldhaka", "Kishoreganj", "Sayedpur"],
+    "Panchagarh": ["Panchagarh Sadar", "Atwari", "Boda", "Debiganj", "Tetulia"],
+    "Rangpur": ["Rangpur Sadar", "Badarganj", "Gangachara", "Kaunia", "Mithapukur", "Pirgachha", "Pirganj", "Taraganj"],
+    "Thakurgaon": ["Thakurgaon Sadar", "Baliadangi", "Haripur", "Pirganj", "Ranisankail"]
+  },
+  "Khulna": {
+    "Bagerhat": ["Bagerhat Sadar", "Chitalmari", "Fakirhat", "Kachua", "Mollahat", "Mongla", "Morrelganj", "Rampal", "Sarankhola"],
+    "Chuadanga": ["Chuadanga Sadar", "Alamdanga", "Damurhuda", "Jibannagar"],
+    "Jessore": ["Jessore Sadar", "Abhaynagar", "Bagherpara", "Chaugachha", "Jhikargachha", "Keshabpur", "Manirampur", "Sharsha"],
+    "Jhenaidah": ["Jhenaidah Sadar", "Harinakunda", "Kaliganj", "Kotchandpur", "Maheshpur", "Shailkupa"],
+    "Khulna": ["Khulna Sadar", "Batiaghata", "Dacope", "Dumuria", "Dighalia", "Koyra", "Paikgachha", "Phultala", "Rupsa", "Terokhada", "Daulatpur", "Khalishpur", "Khan Jahan Ali", "Kotwali", "Sonadanga"],
+    "Kushtia": ["Kushtia Sadar", "Bheramara", "Daulatpur", "Khoksa", "Kumarkhali", "Mirpur"],
+    "Magura": ["Magura Sadar", "Mohammadpur", "Shalikha", "Sreepur"],
+    "Meherpur": ["Meherpur Sadar", "Gangni", "Mujibnagar"],
+    "Narail": ["Narail Sadar", "Kalia", "Lohagara"],
+    "Satkhira": ["Satkhira Sadar", "Assasuni", "Debhata", "Kalaroa", "Kaliganj", "Shyamnagar", "Tala"]
+  },
+  "Barishal": {
+    "Barguna": ["Barguna Sadar", "Amtali", "Betagi", "Bamna", "Pathorghata", "Taltali"],
+    "Barishal": ["Barishal Sadar", "Agailjhara", "Babuganj", "Bakerganj", "Banaripara", "Gaurnadi", "Hizla", "Mehendiganj", "Muladi", "Wazirpur", "Barisal Sadar", "Kotwali", "Bandar"],
+    "Bhola": ["Bhola Sadar", "Burhanuddin", "Char Fasson", "Daulatkhan", "Lalmohan", "Manpura", "Tazumuddin"],
+    "Jhalokati": ["Jhalokati Sadar", "Kathalia", "Nalchity", "Rajapur"],
+    "Patuakhali": ["Patuakhali Sadar", "Bauphal", "Dashmina", "Dumki", "Galachipa", "Kalapara", "Mirzaganj", "Rangabali"],
+    "Pirojpur": ["Pirojpur Sadar", "Bhandaria", "Kawkhali", "Mathbaria", "Nazirpur", "Nesarabad", "Zianagar"]
+  },
+  "Sylhet": {
+    "Habiganj": ["Habiganj Sadar", "Ajmiriganj", "Bahubal", "Baniyachong", "Chunarughat", "Lakhai", "Madhabpur", "Nabiganj", "Shayestaganj"],
+    "Moulvibazar": ["Moulvibazar Sadar", "Barlekha", "Juri", "Kamolganj", "Kulaura", "Rajnagar", "Sreemangal"],
+    "Sunamganj": ["Sunamganj Sadar", "Bishwamvarpur", "Chhatak", "Derai", "Dharampasha", "Dowarabazar", "Jagannathpur", "Jamalganj", "Sullah", "Tahirpur", "South Sunamganj"],
+    "Sylhet": ["Sylhet Sadar", "Balaganj", "Beanibazar", "Bishwanath", "Companiganj", "Fenchuganj", "Golapganj", "Gowainghat", "Jaintiapur", "Kanaighat", "Osmani Nagar", "Zakiganj", "Dakshin Surma"]
+  },
+  "Mymensingh": {
+    "Jamalpur": ["Jamalpur Sadar", "Bakshiganj", "Dewanganj", "Islampur", "Madarganj", "Melandaha", "Sarishabari"],
+    "Mymensingh": ["Mymensingh Sadar", "Bhaluka", "Dhobaura", "Fulbaria", "Gaffargaon", "Gauripur", "Haluaghat", "Ishwarganj", "Muktagachha", "Nandail", "Phulpur", "Trishal"],
+    "Netrokona": ["Netrokona Sadar", "Atpara", "Barhatta", "Durgapur", "Kalmakanda", "Kendua", "Khaliajuri", "Madan", "Mohanganj", "Purbadhala"],
+    "Sherpur": ["Sherpur Sadar", "Jhenaigati", "Nakla", "Nalitabari", "Sreebardi"]
+  }
+};
+
 export const DonorSearch: React.FC<DonorSearchProps> = ({ currentUser }) => {
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     bloodGroup: 'O+' as BloodGroup,
@@ -41,13 +124,43 @@ export const DonorSearch: React.FC<DonorSearchProps> = ({ currentUser }) => {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
+  const [availableUpazilas, setAvailableUpazilas] = useState<string[]>([]);
 
   const bloodGroups: BloodGroup[] = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
-  // Bangladesh divisions for better UX
-  const divisions = [
-    'Dhaka', 'Chittagong', 'Rajshahi', 'Khulna', 'Barisal', 'Sylhet', 'Rangpur', 'Mymensingh'
-  ];
+  // Update districts when division changes
+  useEffect(() => {
+    if (searchFilters.division) {
+      const districts = Object.keys(divisionsDistrictsUpazilas[searchFilters.division as keyof typeof divisionsDistrictsUpazilas] || {});
+      setAvailableDistricts(districts);
+      
+      // Reset district and upazila if division changes
+      if (searchFilters.district && !districts.includes(searchFilters.district)) {
+        setSearchFilters(prev => ({ ...prev, district: "", upazila: "" }));
+        setAvailableUpazilas([]);
+      }
+    } else {
+      setAvailableDistricts([]);
+      setAvailableUpazilas([]);
+    }
+  }, [searchFilters.division]);
+
+  // Update upazilas when district changes
+  useEffect(() => {
+    if (searchFilters.division && searchFilters.district) {
+      const divisionData = divisionsDistrictsUpazilas[searchFilters.division as keyof typeof divisionsDistrictsUpazilas];
+      const upazilas = divisionData?.[searchFilters.district as keyof typeof divisionData] || [];
+      setAvailableUpazilas(upazilas);
+      
+      // Reset upazila if district changes
+      if (searchFilters.upazila && !upazilas.includes(searchFilters.upazila)) {
+        setSearchFilters(prev => ({ ...prev, upazila: "" }));
+      }
+    } else {
+      setAvailableUpazilas([]);
+    }
+  }, [searchFilters.division, searchFilters.district]);
 
   // Backend accepts frontend format (A+, O-) for input
   // But returns enum format (A_PLUS, O_NEG) in response
@@ -239,44 +352,57 @@ export const DonorSearch: React.FC<DonorSearchProps> = ({ currentUser }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Division *
             </label>
-             <select
-              value={searchFilters.division}
-              onChange={(e) => setSearchFilters(prev => ({ ...prev, division: e.target.value }))}
-              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-               >
-              <option value="">Select Division</option>
-              {divisions.map((division) => (
-                <option key={division} value={division}>{division}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+              <select
+                value={searchFilters.division}
+                onChange={(e) => setSearchFilters(prev => ({ ...prev, division: e.target.value }))}
+                className="pl-10 w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 appearance-none bg-white"
+              >
+                <option value="">Select Division</option>
+                {Object.keys(divisionsDistrictsUpazilas).map((division) => (
+                  <option key={division} value={division}>{division}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               District *
             </label>
-            <input
-              type="text"
+            <select
               value={searchFilters.district}
               onChange={(e) => setSearchFilters(prev => ({ ...prev, district: e.target.value }))}
-              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-              placeholder="Enter district"
-              required
-            />
+              disabled={!searchFilters.division}
+              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white"
+            >
+              <option value="">
+                {searchFilters.division ? "Select District" : "Select Division First"}
+              </option>
+              {availableDistricts.map((district) => (
+                <option key={district} value={district}>{district}</option>
+              ))}
+            </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Upazila *
             </label>
-            <input
-              type="text"
+            <select
               value={searchFilters.upazila}
               onChange={(e) => setSearchFilters(prev => ({ ...prev, upazila: e.target.value }))}
-              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-              placeholder="Enter upazila"
-              required
-            />
+              disabled={!searchFilters.district}
+              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none bg-white"
+            >
+              <option value="">
+                {searchFilters.district ? "Select Upazila" : "Select District First"}
+              </option>
+              {availableUpazilas.map((upazila) => (
+                <option key={upazila} value={upazila}>{upazila}</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex items-end">

@@ -265,7 +265,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ user, onUpdateUser
         district: editForm.district.trim(),
         upazila: editForm.upazila.trim(),
         address: editForm.address.trim(),
-        // Keep existing fields that shouldn't change
         bloodGroup: effectiveUser.bloodGroup,
         role: effectiveUser.role,
         isActive: effectiveUser.isActive,
